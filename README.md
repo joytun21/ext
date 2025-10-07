@@ -1,9 +1,5 @@
 # 🚀 Installer EXTRIMER (2025) – SHC Installer
 
-![EXTRIMER](https://raw.githubusercontent.com/joytun21/ext/main/extrimer-logo.jpg)  
-
----
-
 ## 📜 Deskripsi
 
 **EXTRIMER (2025)** adalah installer otomatis untuk menginstall **SHC (Shell Script Compiler)** di server Linux.  
