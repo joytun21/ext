@@ -1,4 +1,4 @@
-# 🚀 Installer SHC (2025)
+# 🚀 Installer SHC
 
 ## 📜 Deskripsi
 
