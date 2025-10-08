@@ -1,4 +1,4 @@
-# 🚀 Installer EXTRIMER (2025) – SHC Installer
+# 🚀 Installer SHC (2025)
 
 ## 📜 Deskripsi
 
