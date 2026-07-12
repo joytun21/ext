@@ -1,8 +1,6 @@
 #!/bin/bash
 
-# ==========================================
-# DEFINE COLOR CODE (PREMIUM LOG THEME)
-# ==========================================
+# Definisikan warna untuk tampilan (bisa disesuaikan dengan script utama kamu)
 cyan='\033[0;36m'
 light_cyan='\033[1;36m'
 green='\033[0;32m'
@@ -15,82 +13,43 @@ neutral='\033[0m'
 function menu_dropbear() {
     clear
     echo -e "${cyan}=======================================${neutral}"
-    echo -e "      ${bold}${light_cyan}CUSTOM UPDATE DROPBEAR core${neutral}      "
+    echo -e "      ${bold}${yellow} UPDATE VERSI DROPBEAR ${neutral}      "
     echo -e "${cyan}=======================================${neutral}"
-    echo -e "  ${bold}Masukkan Tahun atau Versi Rilis.${neutral}"
-    echo -e "  Contoh: ${light_green}2019${neutral}, ${light_green}2022${neutral}, ${light_green}2024${neutral}, atau ${light_green}2026${neutral}"
-    echo -e "  Status: ${yellow}2026.92 (Latest Stable)${neutral}"
-    echo -e "${cyan}───────────────────────────────────────${neutral}"
-    echo -e "  [ Ketik ${red}x${neutral} untuk kembali/keluar ]"
+    echo -e "  ${green}1)${neutral} Dropbear (2017)"
+    echo -e "  ${green}2)${neutral} Dropbear (2019)"
+    echo -e "  ${green}3)${neutral} Dropbear (2022)"
+    echo -e "  ${green}4)${neutral} Dropbear (2024)"
+    echo -e "  ${green}5)${neutral} Dropbear (2025)"
+    echo -e "  ${green}x)${neutral} Exit to menu"
     echo -e "${cyan}=======================================${neutral}"
-    echo ""
     
-    # Input manual bebas
-    read -p " ➔ Masukkan versi/tahun: " USER_INPUT
+    read -p "Choose an option [1-5 or x]: " pilihan
     
-    if [[ "$USER_INPUT" == "x" || "$USER_INPUT" == "X" ]]; then
-        clear
-        exit 0
-    fi
-
-    # Validasi input kosong
-    if [ -z "$USER_INPUT" ]; then
-        echo -e "\n${red}[!] Kesalahan: Input tidak boleh kosong!${neutral}"
-        sleep 2
-        menu_dropbear
-        return
-    fi
-
-    # Logika Pencocokan Otomatis (Auto-mapping Tahun ke Versi Lengkap)
-    case "$USER_INPUT" in
-        2017) VERSION="2017.75" ;;
-        2018) VERSION="2018.76" ;;
-        2019) VERSION="2019.78" ;;
-        2020) VERSION="2020.81" ;;
-        2022) VERSION="2022.82" ;;
-        2024) VERSION="2024.85" ;;
-        2025) VERSION="2025.87" ;;
-        2026) VERSION="2026.92" ;;
-        *)    VERSION="$USER_INPUT" ;; 
+    case $pilihan in
+        1) VERSION="2017.75" ;;
+        2) VERSION="2019.78" ;;
+        3) VERSION="2022.82" ;;
+        4) VERSION="2024.84" ;;
+        5) VERSION="2025.87" ;;
+        x|X) clear; exit 0 ;;
+        *) echo -e "${orange}Invalid choice. Please try again.${neutral}"; sleep 2; menu_dropbear; return ;;
     esac
 
-    URL="https://matt.ucc.asn.au/dropbear/releases/dropbear-${VERSION}.tar.bz2"
-
-    echo -e "\n${cyan}[*] ENGINE:${neutral} Memeriksa file ${light_green}dropbear-${VERSION}${neutral} di server pusat..."
-    
-    # Cek spider mode
-    if ! wget --spider --quiet "$URL"; then
-        echo -e "${red}[!] ERROR: Versi atau Tahun ($USER_INPUT) tidak valid/tidak ditemukan!${neutral}"
-        echo -e "${yellow}[i] Info: Pastikan koneksi internet aktif dan nomor rilis benar.${neutral}"
-        sleep 3.5
-        menu_dropbear
-        return
-    fi
-
-    # Proses Download
-    echo -e "${cyan}[*] DOWNLOAD:${neutral} Mengunduh source code..."
+    # Proses Download dan Install (Diringkas menggunakan variabel agar script lebih pendek & bersih)
+    echo -e "\n${green}[*] Mengunduh dan menginstall Dropbear versi $VERSION...${neutral}"
     cd /root || exit
-    if ! wget -q --show-progress -O "dropbear-${VERSION}.tar.bz2" "$URL"; then
-        echo -e "${red}[!] Gagal mengunduh file binary.${neutral}"
-        sleep 2
-        menu_dropbear
-        return
-    fi
-
-    # Proses Ekstrak & Kompilasi
-    echo -e "${cyan}[*] COMPILING:${neutral} Mengekstrak dan membangun binary baru..."
-    bzip2 -cd "dropbear-${VERSION}.tar.bz2" | tar xf -
-    cd "dropbear-${VERSION}" || exit
     
-    echo -e "${cyan}[*] CONFIGURING:${neutral} Menyesuaikan environment VPS..."
-    ./configure --quiet
-    
-    echo -e "${cyan}[*] MAKING:${neutral} Mengkompilasi source menjadi biner (Mohon Tunggu)..."
-    if ! make --quiet && make install > /dev/null 2>&1; then
-        echo -e "${red}[!] FATAL: Gagal melakukan kompilasi Dropbear pada sistem ini.${neutral}"
-        cd /root && rm -rf "dropbear-${VERSION}" "dropbear-${VERSION}.tar.bz2"
+    wget -O "dropbear-${VERSION}.tar.bz2" "https://matt.ucc.asn.au/dropbear/releases/dropbear-${VERSION}.tar.bz2"
+    if [ ! -f "dropbear-${VERSION}.tar.bz2" ]; then
+        echo -e "${orange}[!] Gagal mengunduh file. Periksa koneksi internet!${neutral}"
         exit 1
     fi
+
+    bzip2 -cd "dropbear-${VERSION}.tar.bz2" | tar xvf -
+    cd "dropbear-${VERSION}" || exit
+    
+    ./configure
+    make && make install
     
     # Backup dan Linking binary baru
     if [ -f /usr/sbin/dropbear ]; then
@@ -103,23 +62,22 @@ function menu_dropbear() {
     grep -qxF '/usr/sbin/nologin' /etc/shells || echo "/usr/sbin/nologin" >> /etc/shells
     
     # Restart service
-    echo -e "${cyan}[*] RESTART:${neutral} Memuat ulang service Dropbear..."
     if [ -f /etc/init.d/dropbear ]; then
-        /etc/init.d/dropbear restart > /dev/null 2>&1
+        /etc/init.d/dropbear restart
     elif systemctl is-active --quiet dropbear; then
         systemctl restart dropbear
+    else
+        echo -e "${orange}[!] Service dropbear tidak ditemukan, silakan restart manual.${neutral}"
     fi
     
     # Pembersihan file sampah
     cd /root || exit
     rm -rf "dropbear-${VERSION}" "dropbear-${VERSION}.tar.bz2"
     
-    echo -e "\n${light_green}[✓] SUKSES: Dropbear versi $VERSION berhasil dipasang!${neutral}"
-    echo -e "${cyan}=======================================${neutral}"
+    echo -e "\n${green}[✓] Dropbear versi $VERSION berhasil diinstall!${neutral}"
     read -p "Tekan [Enter] untuk kembali ke menu..."
     menu_dropbear
 }
 
 # Jalankan fungsi utama
 menu_dropbear
-
